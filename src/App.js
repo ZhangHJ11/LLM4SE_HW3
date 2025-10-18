@@ -1,43 +1,113 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './components/Auth/Login';
+import Register from './components/Auth/Register';
+import Dashboard from './components/Dashboard/Dashboard';
+import { auth } from './lib/supabase';
 import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // 检查Supabase会话
+    const checkSession = async () => {
+      try {
+        const { session } = await auth.getSession();
+        if (session?.user) {
+          const userProfile = {
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+            created_at: session.user.created_at
+          };
+          setUser(userProfile);
+        }
+      } catch (error) {
+        // console.error('Session check error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+
+    // 监听认证状态变化
+    const { data: { subscription } } = auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        const userProfile = {
+          id: session.user.id,
+          email: session.user.email,
+          name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+          created_at: session.user.created_at
+        };
+        setUser(userProfile);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+      }
+    });
+
+    // 清理订阅
+    return () => subscription?.unsubscribe();
+  }, []);
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      setUser(null);
+    } catch (error) {
+      // console.error('Logout error:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+          <p>加载中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>欢迎使用 React Web 应用</h1>
-        <p>这是一个使用 React 构建的现代 Web 应用程序</p>
-        
-        <div className="counter-section">
-          <h2>计数器示例</h2>
-          <p>当前计数: <span className="count">{count}</span></p>
-          <div className="button-group">
-            <button onClick={() => setCount(count + 1)}>
-              增加
-            </button>
-            <button onClick={() => setCount(count - 1)}>
-              减少
-            </button>
-            <button onClick={() => setCount(0)}>
-              重置
-            </button>
-          </div>
-        </div>
-
-        <div className="features">
-          <h2>功能特性</h2>
-          <ul>
-            <li>✅ React 18 最新版本</li>
-            <li>✅ Webpack 5 构建工具</li>
-            <li>✅ Babel 转译器</li>
-            <li>✅ 热重载开发服务器</li>
-            <li>✅ 现代化 CSS 样式</li>
-          </ul>
-        </div>
-      </header>
-    </div>
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route 
+            path="/login" 
+            element={
+              user ? <Navigate to="/dashboard" replace /> : 
+              <Login onLogin={handleLogin} />
+            } 
+          />
+          <Route 
+            path="/register" 
+            element={
+              user ? <Navigate to="/dashboard" replace /> : 
+              <Register onLogin={handleLogin} />
+            } 
+          />
+          <Route 
+            path="/dashboard" 
+            element={
+              user ? <Dashboard user={user} onLogout={handleLogout} /> : 
+              <Navigate to="/login" replace />
+            } 
+          />
+          <Route 
+            path="/" 
+            element={<Navigate to={user ? "/dashboard" : "/login"} replace />} 
+          />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 

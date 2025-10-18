@@ -1,33 +1,49 @@
-# React Web 应用
+# 🌍 AI旅行规划师 (AI Travel Planner)
 
-这是一个使用 React 18 构建的现代 Web 应用程序，配备了完整的开发环境。
+一个智能的旅行规划Web应用程序，帮助用户创建和管理个性化的旅行计划。
 
-## 功能特性
+## ✨ 功能特性
 
+### 🔐 用户管理系统
+- **用户注册与登录** - 安全的用户认证系统
+- **个人仪表板** - 管理个人旅行计划
+- **数据持久化** - 本地存储用户数据
+- **响应式设计** - 支持多设备访问
+
+### 🚀 技术特性
 - ⚛️ React 18 最新版本
+- 🛣️ React Router 路由管理
 - 📦 Webpack 5 构建工具
 - 🔄 Babel 转译器
 - 🔥 热重载开发服务器
 - 🎨 现代化 CSS 样式
-- 📱 响应式设计
+- 📱 完全响应式设计
 
-## 项目结构
+## 📁 项目结构
 
 ```
 ├── public/
-│   └── index.html          # HTML 模板
+│   └── index.html                    # HTML 模板
 ├── src/
-│   ├── App.js              # 主应用组件
-│   ├── App.css             # 应用样式
-│   ├── index.js            # 应用入口
-│   └── index.css           # 全局样式
-├── package.json            # 项目配置
-├── webpack.config.js       # Webpack 配置
-├── .babelrc               # Babel 配置
-└── README.md              # 项目说明
+│   ├── components/
+│   │   ├── Auth/                    # 认证相关组件
+│   │   │   ├── Login.js             # 登录页面
+│   │   │   ├── Register.js          # 注册页面
+│   │   │   └── Auth.css             # 认证样式
+│   │   └── Dashboard/               # 仪表板组件
+│   │       ├── Dashboard.js         # 用户仪表板
+│   │       └── Dashboard.css        # 仪表板样式
+│   ├── App.js                       # 主应用组件
+│   ├── App.css                      # 应用样式
+│   ├── index.js                     # 应用入口
+│   └── index.css                    # 全局样式
+├── package.json                     # 项目配置
+├── webpack.config.js                # Webpack 配置
+├── .babelrc                        # Babel 配置
+└── README.md                       # 项目说明
 ```
 
-## 快速开始
+## 🚀 快速开始
 
 ### 1. 安装依赖
 
@@ -35,7 +51,22 @@
 npm install
 ```
 
-### 2. 启动开发服务器
+### 2. 配置Supabase
+
+1. 在Supabase控制台中创建新项目
+2. 复制项目URL和匿名密钥
+3. 编辑 `src/config/supabase.js` 文件，替换为你的实际配置：
+
+```javascript
+export const supabaseConfig = {
+  url: 'https://your-project-ref.supabase.co', // 替换为你的项目URL
+  anonKey: 'your-actual-anon-key-here' // 替换为你的匿名密钥
+};
+```
+
+4. 在Supabase SQL编辑器中运行 `supabase-setup.sql` 文件中的SQL语句
+
+### 3. 启动开发服务器
 
 ```bash
 npm start
@@ -49,7 +80,7 @@ npm run dev
 
 应用将在 http://localhost:3000 启动，并自动在浏览器中打开。
 
-### 3. 构建生产版本
+### 4. 构建生产版本
 
 ```bash
 npm run build
@@ -57,21 +88,43 @@ npm run build
 
 构建文件将输出到 `dist` 目录。
 
-## 开发说明
+## 🎯 使用指南
 
-- 开发服务器支持热重载，修改代码后会自动刷新页面
-- 所有 React 组件都使用函数式组件和 Hooks
-- CSS 样式采用现代设计，支持响应式布局
-- 项目使用 ES6+ 语法，通过 Babel 转译
+### 用户注册
+1. 访问应用首页，点击"立即注册"
+2. 填写姓名、邮箱和密码
+3. 确认密码后点击"创建账户"
 
-## 技术栈
+### 用户登录
+1. 在登录页面输入邮箱和密码
+2. 点击"登录"按钮
+3. 成功登录后自动跳转到仪表板
 
-- **React**: 18.2.0
-- **Webpack**: 5.88.0
-- **Babel**: 7.22.0
-- **CSS**: 现代 CSS 特性
+### 仪表板功能
+- 查看个人旅行计划统计
+- 管理现有的旅行计划
+- 创建新的旅行计划（功能开发中）
 
-## 浏览器支持
+## 🛠️ 技术栈
+
+- **前端框架**: React 18.2.0
+- **路由管理**: React Router DOM 6.15.0
+- **后端服务**: Supabase (PostgreSQL + Auth)
+- **构建工具**: Webpack 5.88.0
+- **转译器**: Babel 7.22.0
+- **样式**: 现代 CSS + 响应式设计
+- **数据存储**: Supabase 云数据库
+
+## 🔮 未来功能规划
+
+- 🎤 **语音输入** - 支持语音输入旅行需求
+- 🤖 **AI智能规划** - 基于AI的个性化行程推荐
+- 💰 **费用管理** - 智能预算分析和费用跟踪
+- ☁️ **云端同步** - 多设备数据同步
+- 🗺️ **地图集成** - 可视化行程展示
+- 📱 **移动端优化** - PWA支持
+
+## 🌐 浏览器支持
 
 支持所有现代浏览器，包括：
 - Chrome (最新版本)
@@ -79,6 +132,14 @@ npm run build
 - Safari (最新版本)
 - Edge (最新版本)
 
-## 许可证
+## 📄 许可证
 
 MIT License
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request 来帮助改进这个项目！
+
+---
+
+**注意**: 当前版本专注于用户管理功能，AI智能规划和其他高级功能将在后续版本中实现。

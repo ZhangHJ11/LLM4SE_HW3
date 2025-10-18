@@ -1,19 +1,21 @@
 {
-  "name": "react-web-app",
+  "name": "ai-travel-planner",
   "version": "1.0.0",
-  "description": "A React web application",
+  "description": "AI Travel Planner - 智能旅行规划师",
   "main": "index.js",
   "scripts": {
     "start": "webpack serve --mode development --open",
     "build": "webpack --mode production",
     "dev": "webpack serve --mode development"
   },
-  "keywords": ["react", "webpack", "javascript"],
+  "keywords": ["react", "travel", "ai", "planner", "webpack", "javascript"],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.15.0",
+    "@supabase/supabase-js": "^2.38.0"
   },
   "devDependencies": {
     "@babel/core": "^7.22.0",
