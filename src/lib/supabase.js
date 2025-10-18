@@ -88,6 +88,7 @@ export const travelPlans = {
     const { data, error } = await supabase
       .from('travel_plans')
       .insert([planData])
+      .select()
     return { data, error }
   },
 
@@ -101,12 +102,23 @@ export const travelPlans = {
     return { data, error }
   },
 
+  // 获取单个旅行计划详情
+  getById: async (planId) => {
+    const { data, error } = await supabase
+      .from('travel_plans')
+      .select('*')
+      .eq('id', planId)
+      .single()
+    return { data, error }
+  },
+
   // 更新旅行计划
   update: async (planId, updates) => {
     const { data, error } = await supabase
       .from('travel_plans')
-      .update(updates)
+      .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', planId)
+      .select()
     return { data, error }
   },
 
@@ -116,6 +128,96 @@ export const travelPlans = {
       .from('travel_plans')
       .delete()
       .eq('id', planId)
+    return { data, error }
+  },
+
+  // 获取AI生成的旅行计划
+  getAIGenerated: async (userId) => {
+    const { data, error } = await supabase
+      .from('travel_plans')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('ai_generated', true)
+      .order('created_at', { ascending: false })
+    return { data, error }
+  }
+}
+
+// 旅行计划评论相关的方法
+export const planComments = {
+  // 添加评论
+  create: async (commentData) => {
+    const { data, error } = await supabase
+      .from('travel_plan_comments')
+      .insert([commentData])
+      .select()
+    return { data, error }
+  },
+
+  // 获取计划的评论
+  getByPlan: async (planId) => {
+    const { data, error } = await supabase
+      .from('travel_plan_comments')
+      .select(`
+        *,
+        profiles:user_id (name, email)
+      `)
+      .eq('plan_id', planId)
+      .order('created_at', { ascending: false })
+    return { data, error }
+  },
+
+  // 删除评论
+  delete: async (commentId) => {
+    const { data, error } = await supabase
+      .from('travel_plan_comments')
+      .delete()
+      .eq('id', commentId)
+    return { data, error }
+  }
+}
+
+// 旅行计划收藏相关的方法
+export const planFavorites = {
+  // 添加收藏
+  add: async (planId, userId) => {
+    const { data, error } = await supabase
+      .from('travel_plan_favorites')
+      .insert([{ plan_id: planId, user_id: userId }])
+    return { data, error }
+  },
+
+  // 取消收藏
+  remove: async (planId, userId) => {
+    const { data, error } = await supabase
+      .from('travel_plan_favorites')
+      .delete()
+      .eq('plan_id', planId)
+      .eq('user_id', userId)
+    return { data, error }
+  },
+
+  // 检查是否已收藏
+  isFavorited: async (planId, userId) => {
+    const { data, error } = await supabase
+      .from('travel_plan_favorites')
+      .select('id')
+      .eq('plan_id', planId)
+      .eq('user_id', userId)
+      .single()
+    return { data: data !== null, error }
+  },
+
+  // 获取用户的收藏列表
+  getByUser: async (userId) => {
+    const { data, error } = await supabase
+      .from('travel_plan_favorites')
+      .select(`
+        *,
+        travel_plans (*)
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
     return { data, error }
   }
 }
