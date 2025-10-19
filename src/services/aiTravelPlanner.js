@@ -10,7 +10,7 @@ const openai = new OpenAI({
 
 // 旅行规划提示词模板
 const createTravelPrompt = (travelRequest) => {
-  return `你是一位专业的旅行规划师，请根据用户的需求生成详细的旅行计划。
+  return `你是一位专业的中文旅行规划师，请根据用户的需求生成详细的中文旅行计划。
 
 用户需求：
 - 目的地：${travelRequest.destination}
@@ -20,7 +20,7 @@ const createTravelPrompt = (travelRequest) => {
 - 旅行偏好：${travelRequest.preferences}
 - 特殊需求：${travelRequest.specialNeeds || '无'}
 
-请生成一个详细的旅行计划，包含以下信息：
+请生成一个详细的中文旅行计划，包含以下信息：
 
 1. 行程概览
 2. 每日详细行程安排
@@ -119,7 +119,7 @@ const createTravelPrompt = (travelRequest) => {
   ]
 }
 
-请确保返回的JSON格式正确，内容详细且实用。`;
+请确保返回的JSON格式正确，内容详细且实用，所有内容必须使用简体中文。`;
 };
 
 // 生成旅行计划
@@ -212,7 +212,7 @@ export const generateTravelPlan = async (travelRequest) => {
 // 优化旅行计划
 export const optimizeTravelPlan = async (originalPlan, feedback) => {
   try {
-    const prompt = `请根据用户反馈优化以下旅行计划：
+    const prompt = `请根据用户反馈优化以下旅行计划，所有内容必须使用简体中文：
 
 原始计划：
 ${JSON.stringify(originalPlan, null, 2)}
@@ -220,7 +220,7 @@ ${JSON.stringify(originalPlan, null, 2)}
 用户反馈：
 ${feedback}
 
-请提供优化建议，并以JSON格式返回优化后的计划。`;
+请提供优化建议，并以JSON格式返回优化后的计划，所有内容必须使用简体中文。`;
 
     const completion = await openai.chat.completions.create({
       messages: [
@@ -265,10 +265,124 @@ ${feedback}
   }
 };
 
+// 分析语音内容并填充表单
+export const analyzeVoiceContent = async (voiceText) => {
+  try {
+    console.log('🎤 开始分析语音内容...');
+    console.log('📝 语音文本:', voiceText);
+
+    const prompt = `请分析以下语音输入内容，提取旅行相关信息并填充到表单字段中，所有内容必须使用简体中文。
+
+语音输入内容：
+"${voiceText}"
+
+请分析并提取以下信息：
+1. 目的地（destination）- 如果提到具体城市或景点
+2. 旅行天数（days）- 如果提到天数或行程时长
+3. 预算（budget）- 如果提到具体金额
+4. 同行人数（travelers）- 如果提到人数
+5. 旅行偏好（preferences）- 如果提到兴趣、爱好或偏好
+6. 出发日期（startDate）- 如果提到具体日期
+
+请以JSON格式返回分析结果：
+{
+  "destination": "提取的目的地，如果没有则返回空字符串",
+  "days": "提取的天数，如果没有则返回空字符串",
+  "budget": "提取的预算金额，如果没有则返回空字符串",
+  "travelers": "提取的同行人数，如果没有则返回空字符串",
+  "preferences": "提取的旅行偏好，如果没有则返回空字符串",
+  "startDate": "提取的出发日期，如果没有则返回空字符串",
+  "confidence": {
+    "destination": 0.8,
+    "days": 0.9,
+    "budget": 0.7,
+    "travelers": 0.6,
+    "preferences": 0.5,
+    "startDate": 0.3
+  },
+  "analysis": "对语音内容的简要分析说明"
+
+注意：
+- 只提取明确提到的信息，不要猜测或推断
+- 如果没有相关信息，对应字段返回空字符串
+- confidence字段表示提取信息的置信度（0-1之间）
+- 日期格式应为 YYYY-MM-DD
+- 预算和人数应为数字字符串
+- 所有内容必须使用简体中文}`;
+
+    const completion = await openai.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      model: aiConfig.model,
+      reasoning_effort: aiConfig.reasoningEffort,
+      temperature: 0.3, // 降低温度以获得更准确的结果
+      max_tokens: 1000
+    });
+
+    console.log('✅ 收到AI分析响应:', completion);
+    const response = completion.choices[0]?.message?.content;
+    
+    if (!response) {
+      throw new Error('AI服务未返回有效响应');
+    }
+
+    try {
+      const analysisResult = JSON.parse(response);
+      console.log('📊 解析后的分析结果:', analysisResult);
+      
+      return {
+        success: true,
+        data: analysisResult,
+        rawResponse: response
+      };
+    } catch (parseError) {
+      console.error('JSON解析失败:', parseError);
+      // 如果JSON解析失败，返回空结果
+      return {
+        success: true,
+        data: {
+          destination: '',
+          days: '',
+          budget: '',
+          travelers: '',
+          preferences: '',
+          startDate: '',
+          confidence: {
+            destination: 0,
+            days: 0,
+            budget: 0,
+            travelers: 0,
+            preferences: 0,
+            startDate: 0
+          },
+          analysis: '语音内容分析失败，请手动填写表单'
+        },
+        rawResponse: response
+      };
+    }
+  } catch (error) {
+    console.error('❌ AI语音分析错误:', error);
+    return {
+      success: false,
+      error: error.message || 'AI服务调用失败',
+      data: null,
+      errorDetails: {
+        status: error.status,
+        code: error.code,
+        type: error.type
+      }
+    };
+  }
+};
+
 // 获取旅行建议
 export const getTravelSuggestions = async (destination, preferences) => {
   try {
-    const prompt = `请为目的地"${destination}"提供旅行建议，用户偏好：${preferences}。
+    const prompt = `请为目的地"${destination}"提供旅行建议，用户偏好：${preferences}，所有内容必须使用简体中文。
 
 请以JSON格式返回：
 {

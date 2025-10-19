@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { generateTravelPlan } from '../../services/aiTravelPlanner';
+import React, { useState, useRef } from 'react';
+import { generateTravelPlan, analyzeVoiceContent } from '../../services/aiTravelPlanner';
 import { travelPlans } from '../../lib/supabase';
 import './TravelPlanner.css';
 import VoiceInput from './VoiceInput';
@@ -18,7 +18,10 @@ const TravelPlanForm = ({ user, onPlanCreated }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [generatedPlan, setGeneratedPlan] = useState(null);
-  const [voiceText, setVoiceText] = useState(''); // 用于存储语音输入的文本
+  const [voiceText, setVoiceText] = useState(''); // 用于存储语音输入的实时文本
+  const [voiceInputText, setVoiceInputText] = useState(''); // 用于存储语音输入的完整文本
+  const finalVoiceTextRef = useRef(''); // 用于保存最终的语音文本
+  const [isAnalyzing, setIsAnalyzing] = useState(false); // AI分析状态
 
   const handleChange = (e) => {
     setFormData({
@@ -107,19 +110,11 @@ const TravelPlanForm = ({ user, onPlanCreated }) => {
   };
 
   const handleVoiceResult = (text, isFinal) => {
+    // 只更新预览文本，不添加到语音输入框
     setVoiceText(text);
-    // 实时更新文本框内容，不管是否完成
-    if (text) {
-      const newPreferences = formData.preferences + (formData.preferences ? ' ' : '') + text;
-      setFormData({
-        ...formData,
-        preferences: newPreferences
-      });
-    }
-    
-    if (isFinal) {
-      // 清空语音文本预览
-      setVoiceText('');
+    // 保存最终的语音文本到ref中
+    if (text && text.trim()) {
+      finalVoiceTextRef.current = text;
     }
   };
 
@@ -128,8 +123,90 @@ const TravelPlanForm = ({ user, onPlanCreated }) => {
   };
 
   const handleVoiceStop = () => {
-    // 录音停止时的处理
+    // 录音停止时，将预览文本添加到语音输入框
+    const textToAdd = finalVoiceTextRef.current || voiceText;
+    if (textToAdd && textToAdd.trim()) {
+      setVoiceInputText(prev => prev + (prev ? ' ' : '') + textToAdd);
+    }
+    
+    // 清空预览文本和ref
     setVoiceText('');
+    finalVoiceTextRef.current = '';
+  };
+
+  // AI分析语音内容并填充表单
+  const handleAnalyzeVoiceContent = async () => {
+    if (!voiceInputText.trim()) {
+      setError('请先进行语音输入');
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setError('');
+
+    try {
+      const result = await analyzeVoiceContent(voiceInputText);
+      
+      if (result.success && result.data) {
+        const analysis = result.data;
+        
+        // 智能填充表单字段（只填充有内容且置信度较高的字段）
+        const newFormData = { ...formData };
+        let filledFields = [];
+        
+        // 目的地（置信度 > 0.7）
+        if (analysis.destination && analysis.confidence.destination > 0.7) {
+          newFormData.destination = analysis.destination;
+          filledFields.push('目的地');
+        }
+        
+        // 旅行天数（置信度 > 0.7）
+        if (analysis.days && analysis.confidence.days > 0.7) {
+          newFormData.days = analysis.days;
+          filledFields.push('旅行天数');
+        }
+        
+        // 预算（置信度 > 0.7）
+        if (analysis.budget && analysis.confidence.budget > 0.7) {
+          newFormData.budget = analysis.budget;
+          filledFields.push('预算');
+        }
+        
+        // 同行人数（置信度 > 0.6）
+        if (analysis.travelers && analysis.confidence.travelers > 0.6) {
+          newFormData.travelers = analysis.travelers;
+          filledFields.push('同行人数');
+        }
+        
+        // 旅行偏好（置信度 > 0.5）
+        if (analysis.preferences && analysis.confidence.preferences > 0.5) {
+          newFormData.preferences = analysis.preferences;
+          filledFields.push('旅行偏好');
+        }
+        
+        // 出发日期（置信度 > 0.6）
+        if (analysis.startDate && analysis.confidence.startDate > 0.6) {
+          newFormData.startDate = analysis.startDate;
+          filledFields.push('出发日期');
+        }
+        
+        setFormData(newFormData);
+        
+        // 显示填充结果
+        if (filledFields.length > 0) {
+          setError(`✅ AI已成功填充以下字段：${filledFields.join('、')}`);
+        } else {
+          setError('⚠️ AI未能从语音内容中提取到足够的信息，请手动填写表单');
+        }
+      } else {
+        setError('AI分析失败: ' + (result.error || '未知错误'));
+      }
+    } catch (err) {
+      console.error('AI分析错误:', err);
+      setError('AI分析时发生错误: ' + err.message);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (
@@ -142,6 +219,52 @@ const TravelPlanForm = ({ user, onPlanCreated }) => {
 
         <form onSubmit={handleSubmit} className="planner-form">
           {error && <div className="error-message">{error}</div>}
+          
+          {/* 语音输入区域 - 移动到表单最上面 */}
+          <div className="voice-input-section">
+            <h3>🎤 语音输入旅行信息</h3>
+            <p>您可以通过语音输入目的地、日期、预算、同行人数和旅行偏好</p>
+            <div className="voice-input-container">
+              <VoiceInput 
+                onResult={handleVoiceResult}
+                onError={handleVoiceError}
+                onStop={handleVoiceStop}
+              />
+              {voiceText && (
+                <div className="voice-text-preview">
+                  🎤 识别中: {voiceText}
+                </div>
+              )}
+            </div>
+            <div className="voice-text-display">
+              <label htmlFor="voiceInputText">语音输入内容：</label>
+              <textarea
+                id="voiceInputText"
+                value={voiceInputText}
+                onChange={(e) => setVoiceInputText(e.target.value)}
+                rows="3"
+                placeholder="语音识别的内容将显示在这里，您也可以手动编辑..."
+                className="voice-textarea"
+              />
+              <div className="voice-text-actions">
+                <button 
+                  type="button" 
+                  onClick={() => setVoiceInputText('')}
+                  className="clear-voice-button"
+                >
+                  🗑️ 清空
+                </button>
+                <button 
+                  type="button" 
+                  onClick={handleAnalyzeVoiceContent}
+                  className="analyze-voice-button"
+                  disabled={!voiceInputText.trim() || isAnalyzing}
+                >
+                  {isAnalyzing ? '🤖 AI分析中...' : '🤖 AI分析填充表单'}
+                </button>
+              </div>
+            </div>
+          </div>
           
           <div className="form-row">
             <div className="form-group">
@@ -218,26 +341,14 @@ const TravelPlanForm = ({ user, onPlanCreated }) => {
 
           <div className="form-group">
             <label htmlFor="preferences">旅行偏好</label>
-            <div className="voice-input-container">
-              <textarea
-                id="preferences"
-                name="preferences"
-                value={formData.preferences}
-                onChange={handleChange}
-                rows="3"
-                placeholder="例如：喜欢美食和动漫，带孩子，喜欢历史文化，偏好自然风光等"
-              />
-              <VoiceInput 
-                onResult={handleVoiceResult}
-                onError={handleVoiceError}
-                onStop={handleVoiceStop}
-              />
-              {voiceText && (
-                <div className="voice-text-preview">
-                  🎤 识别中: {voiceText}
-                </div>
-              )}
-            </div>
+            <textarea
+              id="preferences"
+              name="preferences"
+              value={formData.preferences}
+              onChange={handleChange}
+              rows="3"
+              placeholder="例如：喜欢美食和动漫，带孩子，喜欢历史文化，偏好自然风光等"
+            />
           </div>
 
           <div className="form-group">

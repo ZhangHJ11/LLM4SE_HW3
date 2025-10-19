@@ -116,9 +116,9 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
           };
           
           websocketRef.current.onclose = () => {
+            // 只在非主动停止时调用onStop
             if (!isStoppingRef.current) {
               stopListening();
-              onStop && onStop();
             }
           };
         }).catch(err => {
@@ -271,7 +271,7 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
               decodedText = fullResult; // 如果解码失败，使用原始结果
             }
             
-            onResult && onResult(decodedText, result.ls); // 使用ls字段判断是否完成
+            onResult && onResult(decodedText, true); // 新格式也直接标记为完成
           }
         }
         // 兼容旧格式
@@ -454,6 +454,9 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
     }
     
     setIsListening(false);
+    
+    // 确保调用onStop回调
+    onStop && onStop();
   };
 
   // 测试麦克风
