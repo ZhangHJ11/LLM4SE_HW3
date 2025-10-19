@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { generateTravelPlan } from '../../services/aiTravelPlanner';
 import { travelPlans } from '../../lib/supabase';
 import './TravelPlanner.css';
+import VoiceInput from './VoiceInput';
 
 const TravelPlanForm = ({ user, onPlanCreated }) => {
   const [formData, setFormData] = useState({
@@ -17,6 +18,7 @@ const TravelPlanForm = ({ user, onPlanCreated }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [generatedPlan, setGeneratedPlan] = useState(null);
+  const [voiceText, setVoiceText] = useState(''); // 用于存储语音输入的文本
 
   const handleChange = (e) => {
     setFormData({
@@ -102,6 +104,32 @@ const TravelPlanForm = ({ user, onPlanCreated }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleVoiceResult = (text, isFinal) => {
+    setVoiceText(text);
+    // 实时更新文本框内容，不管是否完成
+    if (text) {
+      const newPreferences = formData.preferences + (formData.preferences ? ' ' : '') + text;
+      setFormData({
+        ...formData,
+        preferences: newPreferences
+      });
+    }
+    
+    if (isFinal) {
+      // 清空语音文本预览
+      setVoiceText('');
+    }
+  };
+
+  const handleVoiceError = (error) => {
+    setError('语音识别错误: ' + error);
+  };
+
+  const handleVoiceStop = () => {
+    // 录音停止时的处理
+    setVoiceText('');
   };
 
   return (
@@ -190,14 +218,26 @@ const TravelPlanForm = ({ user, onPlanCreated }) => {
 
           <div className="form-group">
             <label htmlFor="preferences">旅行偏好</label>
-            <textarea
-              id="preferences"
-              name="preferences"
-              value={formData.preferences}
-              onChange={handleChange}
-              rows="3"
-              placeholder="例如：喜欢美食和动漫，带孩子，喜欢历史文化，偏好自然风光等"
-            />
+            <div className="voice-input-container">
+              <textarea
+                id="preferences"
+                name="preferences"
+                value={formData.preferences}
+                onChange={handleChange}
+                rows="3"
+                placeholder="例如：喜欢美食和动漫，带孩子，喜欢历史文化，偏好自然风光等"
+              />
+              <VoiceInput 
+                onResult={handleVoiceResult}
+                onError={handleVoiceError}
+                onStop={handleVoiceStop}
+              />
+              {voiceText && (
+                <div className="voice-text-preview">
+                  🎤 识别中: {voiceText}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="form-group">
