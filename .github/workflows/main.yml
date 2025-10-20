@@ -32,4 +32,4 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
-          tags: zhanghj11/llm4se_hw3:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/llm4se_hw3:latest
