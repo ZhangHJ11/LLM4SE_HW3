@@ -35,9 +35,10 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
+          file: ./Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: zhanghj11/llm4se_hw3:latest
           labels: ${{ steps.meta.outputs.labels }}
 
   docker-windows:
