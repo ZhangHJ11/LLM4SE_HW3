@@ -222,4 +222,100 @@ export const planFavorites = {
   }
 }
 
+// 用户偏好设置相关的方法
+export const userPreferences = {
+  // 创建偏好设置
+  create: async (preferenceData) => {
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .insert([preferenceData])
+      .select()
+    return { data, error }
+  },
+
+  // 获取用户的所有偏好设置
+  getByUser: async (userId) => {
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: false })
+    return { data, error }
+  },
+
+  // 获取用户的默认偏好设置
+  getDefault: async (userId) => {
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_default', true)
+      .single()
+    return { data, error }
+  },
+
+  // 获取单个偏好设置
+  getById: async (preferenceId) => {
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .select('*')
+      .eq('id', preferenceId)
+      .single()
+    return { data, error }
+  },
+
+  // 更新偏好设置
+  update: async (preferenceId, updates) => {
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', preferenceId)
+      .select()
+    return { data, error }
+  },
+
+  // 删除偏好设置
+  delete: async (preferenceId) => {
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .delete()
+      .eq('id', preferenceId)
+    return { data, error }
+  },
+
+  // 设置默认偏好设置（会取消其他偏好设置的默认状态）
+  setDefault: async (preferenceId, userId) => {
+    // 先取消所有偏好设置的默认状态
+    await supabase
+      .from('user_preferences')
+      .update({ is_default: false })
+      .eq('user_id', userId)
+
+    // 设置指定偏好设置为默认
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .update({ is_default: true })
+      .eq('id', preferenceId)
+      .select()
+    return { data, error }
+  },
+
+  // 检查偏好设置名称是否已存在
+  checkNameExists: async (userId, name, excludeId = null) => {
+    let query = supabase
+      .from('user_preferences')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('name', name)
+    
+    if (excludeId) {
+      query = query.neq('id', excludeId)
+    }
+    
+    const { data, error } = await query
+    return { exists: data && data.length > 0, error }
+  }
+}
+
 export default supabase

@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { generateTravelPlan, analyzeVoiceContent } from '../../services/aiTravelPlanner';
-import { travelPlans } from '../../lib/supabase';
+import { travelPlans, userPreferences } from '../../lib/supabase';
 import './TravelPlanner.css';
 import VoiceInput from './VoiceInput';
 
@@ -22,6 +22,30 @@ const TravelPlanForm = ({ user, onPlanCreated }) => {
   const [voiceInputText, setVoiceInputText] = useState(''); // 用于存储语音输入的完整文本
   const finalVoiceTextRef = useRef(''); // 用于保存最终的语音文本
   const [isAnalyzing, setIsAnalyzing] = useState(false); // AI分析状态
+  const [userPreferencesList, setUserPreferencesList] = useState([]); // 用户偏好设置列表
+  const [selectedPreference, setSelectedPreference] = useState(null); // 选中的偏好设置
+
+  // 获取用户偏好设置
+  useEffect(() => {
+    fetchUserPreferences();
+  }, [user]);
+
+  const fetchUserPreferences = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const { data, error } = await userPreferences.getByUser(user.id);
+      if (error) {
+        console.error('获取偏好设置失败:', error);
+      } else {
+        setUserPreferencesList(data || []);
+        // 重置选中的偏好设置，不自动选择
+        setSelectedPreference(null);
+      }
+    } catch (err) {
+      console.error('获取偏好设置时发生错误:', err);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -29,6 +53,62 @@ const TravelPlanForm = ({ user, onPlanCreated }) => {
       [e.target.name]: e.target.value
     });
     setError('');
+  };
+
+  // 应用偏好设置到表单
+  const applyPreference = (preference) => {
+    if (!preference || !preference.preferences) return;
+    
+    const pref = preference.preferences;
+    const newFormData = { ...formData };
+    
+    // 应用偏好设置到表单字段
+    if (pref.travelStyle) {
+      newFormData.preferences = pref.travelStyle;
+    }
+    
+    if (pref.budgetRange) {
+      // 从预算范围中提取数字
+      const budgetMatch = pref.budgetRange.match(/(\d+)/);
+      if (budgetMatch) {
+        newFormData.budget = budgetMatch[1];
+      }
+    }
+    
+    if (pref.groupSize) {
+      // 从出行人数中提取数字
+      const groupMatch = pref.groupSize.match(/(\d+)/);
+      if (groupMatch) {
+        newFormData.travelers = groupMatch[1];
+      }
+    }
+    
+    // 合并特殊需求
+    if (pref.specialNeeds) {
+      newFormData.specialNeeds = pref.specialNeeds;
+    }
+    
+    // 合并饮食偏好
+    if (pref.foodPreferences) {
+      const currentPrefs = newFormData.preferences ? newFormData.preferences + '；' : '';
+      newFormData.preferences = currentPrefs + `饮食偏好：${pref.foodPreferences}`;
+    }
+    
+    // 合并活动类型偏好
+    if (pref.activityTypes && pref.activityTypes.length > 0) {
+      const currentPrefs = newFormData.preferences ? newFormData.preferences + '；' : '';
+      newFormData.preferences = currentPrefs + `喜欢的活动：${pref.activityTypes.join('、')}`;
+    }
+    
+    // 合并季节偏好
+    if (pref.seasonPreferences && pref.seasonPreferences.length > 0) {
+      const currentPrefs = newFormData.preferences ? newFormData.preferences + '；' : '';
+      newFormData.preferences = currentPrefs + `偏好季节：${pref.seasonPreferences.join('、')}`;
+    }
+    
+    setFormData(newFormData);
+    setSelectedPreference(preference);
+    setError(`✅ 已应用偏好设置"${preference.name}"`);
   };
 
   const handleSubmit = async (e) => {
@@ -45,8 +125,8 @@ const TravelPlanForm = ({ user, onPlanCreated }) => {
     }
 
     try {
-      // 调用AI生成旅行计划
-      const result = await generateTravelPlan(formData);
+      // 调用AI生成旅行计划，传递用户偏好设置
+      const result = await generateTravelPlan(formData, selectedPreference);
       
       if (result.success) {
         setGeneratedPlan(result.data);
@@ -219,6 +299,35 @@ const TravelPlanForm = ({ user, onPlanCreated }) => {
 
         <form onSubmit={handleSubmit} className="planner-form">
           {error && <div className="error-message">{error}</div>}
+          
+          {/* 偏好设置快速选择区域 */}
+          {userPreferencesList.length > 0 && (
+            <div className="preferences-quick-select">
+              <h3>⚙️ 快速应用偏好设置</h3>
+              <p>选择您保存的偏好设置，快速填充表单信息</p>
+              <div className="preferences-buttons">
+                {userPreferencesList.map((preference) => (
+                  <button
+                    key={preference.id}
+                    type="button"
+                    className={`preference-quick-button ${selectedPreference?.id === preference.id ? 'selected' : ''}`}
+                    onClick={() => applyPreference(preference)}
+                  >
+                    {preference.is_default && <span className="default-indicator">⭐</span>}
+                    {preference.name}
+                  </button>
+                ))}
+              </div>
+              {selectedPreference && (
+                <div className="selected-preference-info">
+                  <p>✅ 当前应用：<strong>{selectedPreference.name}</strong></p>
+                  {selectedPreference.description && (
+                    <p className="preference-description">{selectedPreference.description}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           
           {/* 语音输入区域 - 移动到表单最上面 */}
           <div className="voice-input-section">

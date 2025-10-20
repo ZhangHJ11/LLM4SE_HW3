@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { travelPlans } from '../../lib/supabase';
 import TravelPlanForm from '../TravelPlanner/TravelPlanForm';
 import TravelPlanDetails from '../TravelPlanner/TravelPlanDetails';
+import UserPreferences from '../UserPreferences/UserPreferences';
 // import AITestConnection from '../AITest/AITestConnection';
 // import TestConnection from '../TestConnection';
 // import TestUserStatus from '../TestUserStatus';
@@ -13,6 +14,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [loading, setLoading] = useState(true);
   const [showTravelPlanner, setShowTravelPlanner] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [showPreferences, setShowPreferences] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,6 +28,14 @@ const Dashboard = ({ user, onLogout }) => {
 
   const handleCreatePlan = () => {
     setShowTravelPlanner(true);
+  };
+
+  const handleShowPreferences = () => {
+    setShowPreferences(true);
+  };
+
+  const handleClosePreferences = () => {
+    setShowPreferences(false);
   };
 
   const handlePlanCreated = (newPlan) => {
@@ -92,6 +102,31 @@ const Dashboard = ({ user, onLogout }) => {
       default: return '未知';
     }
   };
+
+  // 如果显示偏好设置，渲染偏好设置组件
+  if (showPreferences) {
+    return (
+      <div className="dashboard-container">
+        <header className="dashboard-header">
+          <div className="header-content">
+            <div className="header-left">
+              <h1>🌍 AI旅行规划师</h1>
+              <p>欢迎回来，{user?.name}！</p>
+            </div>
+            <div className="header-right">
+              <button onClick={handleClosePreferences} className="back-button">
+                ← 返回仪表板
+              </button>
+              <button onClick={handleLogout} className="logout-button">
+                退出登录
+              </button>
+            </div>
+          </div>
+        </header>
+        <UserPreferences user={user} onClose={handleClosePreferences} />
+      </div>
+    );
+  }
 
   // 如果显示旅行规划器，渲染规划器组件
   if (showTravelPlanner) {
@@ -168,9 +203,14 @@ const Dashboard = ({ user, onLogout }) => {
           <div className="welcome-section">
             <h2>我的旅行计划</h2>
             <p>管理您的旅行计划，开始规划下一次精彩旅程</p>
-            <button onClick={handleCreatePlan} className="create-plan-button">
-              ✈️ 创建新计划
-            </button>
+            <div className="welcome-actions">
+              <button onClick={handleCreatePlan} className="create-plan-button">
+                ✈️ 创建新计划
+              </button>
+              <button onClick={handleShowPreferences} className="preferences-button">
+                ⚙️ 偏好设置
+              </button>
+            </div>
           </div>
 
           <div className="plans-section">
@@ -221,7 +261,6 @@ const Dashboard = ({ user, onLogout }) => {
                        >
                          查看详情
                        </button>
-                       <button className="edit-button">编辑</button>
                      </div>
                    </div>
                  ))}

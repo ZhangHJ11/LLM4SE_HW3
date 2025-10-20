@@ -36,6 +36,89 @@
   margin-bottom: 40px;
 }
 
+/* 偏好设置快速选择样式 */
+.preferences-quick-select {
+  background: #f7fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 30px;
+}
+
+.preferences-quick-select h3 {
+  color: #2d3748;
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.preferences-quick-select p {
+  color: #718096;
+  margin: 0 0 20px 0;
+  font-size: 14px;
+}
+
+.preferences-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.preference-quick-button {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4a5568;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.preference-quick-button:hover {
+  border-color: #4299e1;
+  color: #2d3748;
+  transform: translateY(-1px);
+}
+
+.preference-quick-button.selected {
+  background: #4299e1;
+  border-color: #4299e1;
+  color: white;
+}
+
+.default-indicator {
+  font-size: 12px;
+}
+
+.selected-preference-info {
+  background: #e6fffa;
+  border: 1px solid #81e6d9;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.selected-preference-info p {
+  margin: 0 0 8px 0;
+  color: #2d3748;
+  font-size: 14px;
+}
+
+.selected-preference-info p:last-child {
+  margin-bottom: 0;
+}
+
+.preference-description {
+  color: #718096 !important;
+  font-size: 13px !important;
+  font-style: italic;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -9,8 +9,26 @@ const openai = new OpenAI({
 });
 
 // 旅行规划提示词模板
-const createTravelPrompt = (travelRequest) => {
-  return `你是一位专业的中文旅行规划师，请根据用户的需求生成详细的中文旅行计划。
+const createTravelPrompt = (travelRequest, userPreference = null) => {
+  let preferenceInfo = '';
+  if (userPreference && userPreference.preferences) {
+    const pref = userPreference.preferences;
+    preferenceInfo = `
+
+用户偏好设置（${userPreference.name}）：
+- 旅行风格：${pref.travelStyle || '未指定'}
+- 住宿类型：${pref.accommodationType || '未指定'}
+- 预算范围：${pref.budgetRange || '未指定'}
+- 常用出行人数：${pref.groupSize || '未指定'}
+- 饮食偏好：${pref.foodPreferences || '未指定'}
+- 活动类型：${pref.activityTypes ? pref.activityTypes.join('、') : '未指定'}
+- 季节偏好：${pref.seasonPreferences ? pref.seasonPreferences.join('、') : '未指定'}
+- 特殊需求：${pref.specialNeeds || '无'}
+- 语言偏好：${pref.languagePreferences || '未指定'}
+- 交通偏好：${pref.transportationPreferences || '未指定'}`;
+  }
+
+  return `你是一位专业的中文旅行规划师，请根据用户的需求和偏好设置生成详细的中文旅行计划。
 
 用户需求：
 - 目的地：${travelRequest.destination}
@@ -18,7 +36,7 @@ const createTravelPrompt = (travelRequest) => {
 - 预算：${travelRequest.budget}元
 - 同行人数：${travelRequest.travelers}人
 - 旅行偏好：${travelRequest.preferences}
-- 特殊需求：${travelRequest.specialNeeds || '无'}
+- 特殊需求：${travelRequest.specialNeeds || '无'}${preferenceInfo}
 
 请生成一个详细的中文旅行计划，包含以下信息：
 
@@ -123,17 +141,18 @@ const createTravelPrompt = (travelRequest) => {
 };
 
 // 生成旅行计划
-export const generateTravelPlan = async (travelRequest) => {
+export const generateTravelPlan = async (travelRequest, userPreference = null) => {
   try {
     console.log('🚀 开始生成旅行计划...');
     console.log('📋 请求参数:', travelRequest);
+    console.log('⚙️ 用户偏好设置:', userPreference);
     console.log('🔑 API配置:', {
       baseURL: aiConfig.baseURL,
       model: aiConfig.model,
       hasApiKey: !!aiConfig.apiKey
     });
 
-    const prompt = createTravelPrompt(travelRequest);
+    const prompt = createTravelPrompt(travelRequest, userPreference);
     console.log('📝 生成的提示词长度:', prompt.length);
     
     console.log('🌐 发送请求到火山引擎...');

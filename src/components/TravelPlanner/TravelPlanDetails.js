@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { travelPlans } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
+import TravelExpenseTracker from './TravelExpenseTracker';
 import './TravelPlanner.css';
 
 const TravelPlanDetails = ({ plan, onClose, onUpdate }) => {
@@ -392,6 +393,17 @@ const TravelPlanDetails = ({ plan, onClose, onUpdate }) => {
             )}
           </p>
         </div>
+
+        {/* 旅行记账功能 */}
+        <TravelExpenseTracker 
+          planId={plan.id} 
+          planDetails={{
+            budget: plan.budget,
+            destination: plan.destination,
+            startDate: plan.start_date,
+            endDate: plan.end_date
+          }}
+        />
       </div>
     </div>
   );
