@@ -38,6 +38,7 @@ module.exports = {
       safe: true,
       allowEmptyValues: true,
       defaults: true,
+      silent: true,
     }),
   ],
   devServer: {
