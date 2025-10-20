@@ -111,12 +111,12 @@ const TravelMap = ({ planDetails }) => {
     } catch (error) {
       console.error('地图初始化失败:', error);
     }
-  }, [isMapLoaded, attractions]);
+  }, [isMapLoaded]);
 
   // 添加景点标记
   // 简化的地图初始化，不添加任何标记
   const initializeMap = (map) => {
-    console.log('🗺️ 地图初始化完成');
+    // 地图初始化
     // 只设置地图中心点，不添加任何标记
     if (attractions.length > 0) {
       const firstAttraction = attractions[0];
@@ -136,7 +136,7 @@ const TravelMap = ({ planDetails }) => {
         const geocoder = new window.BMapGL.Geocoder();
         geocoder.getPoint(address, (point) => {
           if (point) {
-            console.log('📌 地理编码成功:', address, point);
+            // 地理编码成功
             resolve(point);
           } else {
             console.warn('⚠️ 地理编码失败:', address, 'cityHint:', cityName);
@@ -163,13 +163,13 @@ const TravelMap = ({ planDetails }) => {
 
     setIsLoading(true);
     
-    console.log('🚗 开始路线规划:', selectedStart, '→', selectedEnd);
+    // 开始路线规划
 
     try {
       const map = mapInstanceRef.current;
       
       // 不清除所有覆盖物，让百度地图API自动管理路线渲染
-      console.log('🗺️ 保持现有地图状态，让API自动渲染路线');
+      // 保持现有地图状态
 
       // 地理编码出发点/终点
       const [startPoint, endPoint] = await Promise.all([
@@ -177,9 +177,11 @@ const TravelMap = ({ planDetails }) => {
         geocodeToPoint(selectedEnd)
       ]);
 
+      // 起终点坐标就绪
+
       // 设置超时处理
       const timeoutId = setTimeout(() => {
-        console.log('⏰ 路线规划超时');
+        // 路线规划超时
         setIsLoading(false);
         alert('路线规划请求超时，请检查网络连接或稍后重试');
       }, 15000); // 15秒超时
@@ -199,7 +201,7 @@ const TravelMap = ({ planDetails }) => {
           
           // 检查路线规划状态
           const status = driving.getStatus();
-          console.log('路线规划状态:', status === 0 ? '成功' : '失败');
+          // 路线规划状态
           
           if (status === 0) { // 0 表示成功
             const plan = results.getPlan && results.getPlan(0);
@@ -214,10 +216,10 @@ const TravelMap = ({ planDetails }) => {
               };
               
               setRouteInfo(routeInfo);
-              console.log('✅ 路线信息已设置:', routeInfo);
+              // 路线信息已设置
               
               // 显示文字路线信息
-              console.log('📝 显示路线信息');
+              // 显示路线信息
               
               // 尝试获取路线步骤信息
               let routeSteps = [];
@@ -259,6 +261,7 @@ const TravelMap = ({ planDetails }) => {
                 }
               } catch (error) {
                 // 无法获取详细路线步骤
+                console.error('获取路线步骤信息失败:', error);
               }
               
               // 如果无法获取步骤，生成基本路线信息
@@ -334,30 +337,55 @@ const TravelMap = ({ planDetails }) => {
               // 简化版本：直接绘制路线
               if (route && route.getPath) {
                 const path = route.getPath();
-                console.log('路径点数量:', path.length);
+                // 路径点数量: path.length
                 
-                // 清除所有覆盖物
-                map.clearOverlays();
-                
-                // 创建并添加路线
-                const polyline = new window.BMapGL.Polyline(path, {
-                  strokeColor: "blue",
-                  strokeWeight: 6,
-                  strokeOpacity: 0.8
-                });
-                map.addOverlay(polyline);
-                
-                // 添加起点终点标记
-                map.addOverlay(new window.BMapGL.Marker(path[0]));
-                map.addOverlay(new window.BMapGL.Marker(path[path.length - 1]));
-                
-                // 设置地图视野
-                map.setViewport(path);
-                
-                console.log('✅ 路线已绘制，覆盖物数量:', map.getOverlays().length);
+                // 确保路径点存在且不为空
+                if (path && path.length > 0) {
+                  // 清除所有覆盖物
+                  map.clearOverlays();
+                  
+                  // 使用与测试地图相同的模式添加实际路线
+                  const polyline = new window.BMapGL.Polyline(path, {
+                    strokeColor: "#ff0000", // 使用红色以便更容易看到
+                    strokeWeight: 6,
+                    strokeOpacity: 0.9
+                  });
+                  map.addOverlay(polyline);
+                   // 路线Polyline已添加
+                  
+                  // 添加起点终点标记
+                  const startMarker = new window.BMapGL.Marker(path[0]);
+                  const endMarker = new window.BMapGL.Marker(path[path.length - 1]);
+                  map.addOverlay(startMarker);
+                  map.addOverlay(endMarker);
+                   // 起点终点标记已添加
+                  
+                  // 设置地图视野 - 使用更明确的方式
+                  map.setViewport(path);
+                   // 地图视野已设置
+                  
+                   // 路线已绘制
+                  
+                  // 强制刷新地图以确保渲染
+                  setTimeout(() => {
+                    map.panBy(1, 1);
+                    map.panBy(-1, -1);
+                     // 地图已强制刷新
+                    
+                    // 再次检查覆盖物数量
+                     // 强制刷新后覆盖物数量
+                  }, 100);
+                  
+                  // 再次检查覆盖物数量
+                  setTimeout(() => {
+                     // 延迟检查覆盖物数量
+                  }, 500);
+                } else {
+                  // 路径点为空或无效
+                }
               }
             } else {
-              console.log('❌ 未找到路线计划');
+              // 未找到路线计划
               alert('未找到合适的路线');
             }
           } else {
@@ -387,7 +415,7 @@ const TravelMap = ({ planDetails }) => {
         },
         onMarkersSet: () => {
           // 路线标记设置完成回调
-          console.log('🛰️ 路线标记设置完成');
+          // 路线标记设置完成
         }
       });
 
@@ -403,11 +431,60 @@ const TravelMap = ({ planDetails }) => {
 
   // 清除路线
   const clearRoute = () => {
+    if (mapInstanceRef.current) {
+      // 清除所有覆盖物
+      mapInstanceRef.current.clearOverlays();
+      // 已清除所有地图覆盖物
+    }
     setRouteInfo(null);
     setSelectedStart('');
     setSelectedEnd('');
-    console.log('🗑️ 已清除路线信息');
+    // 已清除路线信息
   };
+
+  // 添加一个函数来手动绘制路线以调试问题
+  const drawRouteManually = (points) => {
+    if (!mapInstanceRef.current || !points || points.length === 0) {
+      // 无法绘制路线: 地图实例或路径点无效
+      return;
+    }
+
+    const map = mapInstanceRef.current;
+    
+    // 清除现有覆盖物
+    map.clearOverlays();
+    // 已清除现有覆盖物
+
+    try {
+      // 创建路线折线
+      const polyline = new window.BMapGL.Polyline(points, {
+        strokeColor: "#ff0000", // 红色路线，便于识别
+        strokeWeight: 6,
+        strokeOpacity: 0.9
+      });
+      
+      // 添加到地图
+      map.addOverlay(polyline);
+      // 路线已添加到地图
+      
+      // 添加起点和终点标记
+      if (points.length > 0) {
+        const startMarker = new window.BMapGL.Marker(points[0]);
+        const endMarker = new window.BMapGL.Marker(points[points.length - 1]);
+        map.addOverlay(startMarker);
+        map.addOverlay(endMarker);
+        // 起点和终点标记已添加
+      }
+      
+      // 调整地图视野以适应路线
+      map.setViewport(points);
+      // 地图视野已调整以适应路线
+      
+    } catch (error) {
+      console.error('❌ 手动绘制路线失败:', error);
+    }
+  };
+
 
   return (
     <div className="travel-map-container">
@@ -465,6 +542,7 @@ const TravelMap = ({ planDetails }) => {
           >
             🗑️ 清除路线
           </button>
+          
         </div>
       </div>
 
