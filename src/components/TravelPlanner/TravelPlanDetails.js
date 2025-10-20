@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { travelPlans } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import TravelExpenseTracker from './TravelExpenseTracker';
+import TravelMap from './TravelMap';
 import './TravelPlanner.css';
 
 const TravelPlanDetails = ({ plan, onClose, onUpdate }) => {
@@ -404,6 +405,9 @@ const TravelPlanDetails = ({ plan, onClose, onUpdate }) => {
             endDate: plan.end_date
           }}
         />
+
+        {/* 路线规划地图 */}
+        <TravelMap planDetails={planDetails} />
       </div>
     </div>
   );
