@@ -32,10 +32,21 @@
 npm install
 ```
 
-### 2. 配置服务
-1. **Supabase**: 配置 `src/config/supabase.js`
-2. **火山引擎AI**: 配置 `src/config/ai.js`
-3. **讯飞语音识别**: 配置 `src/components/TravelPlanner/VoiceInput.js`
+### 2. 配置环境变量
+1. 复制 `.env.local.example` 文件并重命名为 `.env.local`
+2. 在 `.env.local` 文件中配置您的 API 密钥：
+```bash
+# 火山引擎API密钥 (用于AI旅行规划)
+DOUBAO_APIKEY=your_actual_api_key_here
+
+# Supabase配置 (用于用户认证和数据存储)
+SUPABASE_KEY=your_supabase_anon_key_here
+
+# 讯飞语音识别配置 (用于语音输入功能)
+XF_APPID=your_xunfei_app_id_here
+XF_APIKEY=your_xunfei_api_key_here
+XF_APISECRET=your_xunfei_api_secret_here
+```
 
 ### 3. 启动应用
 ```bash

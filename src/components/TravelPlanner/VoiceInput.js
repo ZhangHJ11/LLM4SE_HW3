@@ -18,12 +18,12 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
   // 在这里填写您的讯飞API凭证
   // 1. 前往 https://www.xfyun.cn/ 注册并创建应用
   // 2. 获取APP ID, API Key和API Secret
-  // 3. 将下面的值替换为您自己的凭证
+  // 3. 设置环境变量 XF_APIKEY 为你的实际讯飞API密钥
   // ==========================================
     const XF_CONFIG = {
-        appId: '195d8592',           // 替换为您的讯飞APP ID
-        apiKey: 'b9acbec0dd024b46a0994d1dc7ee63b8',         // 替换为您的讯飞API Key
-        apiSecret: 'OTNjZmFlMDhmMDc4YmE2NGI3YTU1Mzhk'    // 替换为您的讯飞API Secret
+        appId: process.env.XF_APPID || '',           // 设置环境变量 XF_APPID
+        apiKey: process.env.XF_APIKEY || '',         // 设置环境变量 XF_APIKEY
+        apiSecret: process.env.XF_APISECRET || ''    // 设置环境变量 XF_APISECRET
     };
 
   // 生成RFC1123格式的时间戳
@@ -82,8 +82,7 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
     return new Promise((resolve, reject) => {
       try {
         // 检查是否已配置凭证
-        if (!XF_CONFIG.appId || !XF_CONFIG.apiKey || !XF_CONFIG.apiSecret || 
-            XF_CONFIG.appId === 'YOUR_APP_ID_HERE') {
+        if (!XF_CONFIG.appId || !XF_CONFIG.apiKey || !XF_CONFIG.apiSecret) {
           throw new Error('请先配置讯飞API凭证');
         }
         

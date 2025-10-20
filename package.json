@@ -8,15 +8,22 @@
     "build": "webpack --mode production",
     "dev": "webpack serve --mode development"
   },
-  "keywords": ["react", "travel", "ai", "planner", "webpack", "javascript"],
+  "keywords": [
+    "react",
+    "travel",
+    "ai",
+    "planner",
+    "webpack",
+    "javascript"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@supabase/supabase-js": "^2.38.0",
+    "openai": "^4.20.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.15.0",
-    "@supabase/supabase-js": "^2.38.0",
-    "openai": "^4.20.0"
+    "react-router-dom": "^6.15.0"
   },
   "devDependencies": {
     "@babel/core": "^7.22.0",
@@ -24,6 +31,7 @@
     "@babel/preset-react": "^7.22.0",
     "babel-loader": "^9.1.0",
     "css-loader": "^6.8.0",
+    "dotenv-webpack": "^8.1.1",
     "html-webpack-plugin": "^5.5.0",
     "style-loader": "^3.3.0",
     "webpack": "^5.88.0",

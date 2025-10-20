@@ -12,7 +12,7 @@ const TravelMap = ({ planDetails }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   // 百度地图API密钥 - 请替换为你的实际密钥
-  const BAIDU_MAP_AK = 'cFszv9aC8dtsnwqjcEoMm8meU2lhr4jz'; // 需要替换为实际的百度地图API密钥
+  const BAIDU_MAP_AK = process.env.BAIDU_AK || ''; // 需要替换为实际的百度地图API密钥
 
   // 提取景点信息
   const extractAttractions = () => {

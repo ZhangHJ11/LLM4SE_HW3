@@ -1,0 +1,39 @@
+name: Build and Deploy
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+        env:
+          DOUBAO_APIKEY: ${{ secrets.DOUBAO_APIKEY }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          XF_APPID: ${{ secrets.XF_APPID }}
+          XF_APIKEY: ${{ secrets.XF_APIKEY }}
+          XF_APISECRET: ${{ secrets.XF_APISECRET }}
+          BAIDU_AK: ${{ secrets.BAIDU_AK }}
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
