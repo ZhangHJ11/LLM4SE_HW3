@@ -1,76 +1,170 @@
-# 🌍 AI旅行规划师 (AI Travel Planner)
+# AI Travel Planner - 智能旅行规划师
 
-一个智能的旅行规划Web应用程序，帮助用户创建和管理个性化的旅行计划。
+AI Travel Planner 是一个基于人工智能的旅行规划应用，集成语音识别、地图服务和AI大模型，为用户提供个性化的旅行建议。
 
-## ✨ 核心功能
+## 功能特性
 
-### 🔐 用户管理
-- 用户注册与登录
-- 个人仪表板
-- 数据云端存储
+- 语音输入旅行需求
+- AI生成个性化旅行计划
+- 百度地图路线展示
+- Supabase用户认证和数据存储
 
-### 🤖 AI智能旅行规划
-- 基于火山引擎AI的个性化旅行规划
-- 详细行程安排（景点、餐厅、住宿、交通等）
-- 智能预算分配和费用估算
-- 所有内容均为简体中文
+## 环境要求
 
-### 🎤 语音输入
-- 中文语音识别（讯飞API）
-- 实时识别与文本编辑
-- AI分析语音内容并自动填充表单
+- Node.js 16+
+- Docker (可选，用于容器化部署)
 
-### 🗺️ 地图路线规划
-- 景点自动标注
-- 任意两点间最优路线规划
-- 可视化路线展示与详细信息
+## 本地开发
 
-## 🚀 快速开始
+### 环境变量配置
 
-### 1. 安装依赖
+1. 复制 [.env.local.example](file:///D:/front/LLM4SE_HW3/.env.local.example) 文件并重命名为 [.env.local](file:///D:/front/LLM4SE_HW3/.env.local)：
+   ```bash
+   cp .env.local.example .env.local
+   ```
+
+2. 在 [.env.local](file:///D:/front/LLM4SE_HW3/.env.local) 文件中配置以下环境变量：
+
+   ```
+   # 火山引擎API密钥（用于AI旅行计划生成）
+   DOUBAO_APIKEY=your_doubao_api_key
+   
+   # Supabase配置
+   SUPABASE_KEY=your_supabase_anon_key
+   
+   # 讯飞语音识别配置
+   XF_APPID=your_xunfei_app_id
+   XF_APIKEY=your_xunfei_api_key
+   XF_APISECRET=your_xunfei_api_secret
+   
+   # 百度地图API密钥
+   BAIDU_AK=your_baidu_map_ak
+   ```
+
+### 安装依赖
+
 ```bash
 npm install
 ```
 
-### 2. 配置环境变量
-1. 复制 `.env.local.example` 文件并重命名为 `.env.local`
-2. 在 `.env.local` 文件中配置您的 API 密钥：
+### 启动开发服务器
+
 ```bash
-# 火山引擎API密钥 (用于AI旅行规划)
-DOUBAO_APIKEY=your_actual_api_key_here
-
-# Supabase配置 (用于用户认证和数据存储)
-SUPABASE_KEY=your_supabase_anon_key_here
-
-# 讯飞语音识别配置 (用于语音输入功能)
-XF_APPID=your_xunfei_app_id_here
-XF_APIKEY=your_xunfei_api_key_here
-XF_APISECRET=your_xunfei_api_secret_here
+npm run dev
 ```
 
-### 3. 启动应用
+应用将在 http://localhost:3000 上运行。
+
+### 构建生产版本
+
 ```bash
-npm start
+npm run build
 ```
 
-应用将在 http://localhost:3000 启动。
+## Docker 部署
 
-## 🛠️ 技术栈
-- **前端**: React 18, React Router
-- **后端**: Supabase (PostgreSQL + Auth)
-- **AI服务**: 火山引擎豆包大模型
-- **语音识别**: 讯飞语音识别API
-- **地图服务**: 百度地图GL版API
-- **构建工具**: Webpack 5, Babel 7
+### 使用预构建的 Docker 镜像
 
-## 📄 许可证
+您可以选择使用适用于 Linux 或 Windows 的镜像：
 
-MIT License
+**Linux 镜像（推荐，更轻量）**
+```bash
+docker pull zhanghj11/llm4se_hw3:latest
+docker run -d \
+  --name ai-travel-planner \
+  -p 8080:80 \
+  -e DOUBAO_APIKEY=your_doubao_api_key \
+  -e SUPABASE_KEY=your_supabase_anon_key \
+  -e XF_APPID=your_xunfei_app_id \
+  -e XF_APIKEY=your_xunfei_api_key \
+  -e XF_APISECRET=your_xunfei_api_secret \
+  -e BAIDU_AK=your_baidu_map_ak \
+  zhanghj11/llm4se_hw3:latest
+```
 
-## 🤝 贡献
+**Windows 镜像（适用于 Windows 容器环境）**
+```bash
+docker pull zhanghj11/llm4se_hw3:windows-latest
+docker run -d \
+  --name ai-travel-planner \
+  -p 8080:8080 \
+  -e DOUBAO_APIKEY=your_doubao_api_key \
+  -e SUPABASE_KEY=your_supabase_anon_key \
+  -e XF_APPID=your_xunfei_app_id \
+  -e XF_APIKEY=your_xunfei_api_key \
+  -e XF_APISECRET=your_xunfei_api_secret \
+  -e BAIDU_AK=your_baidu_map_ak \
+  zhanghj11/llm4se_hw3:windows-latest
+```
 
-欢迎提交 Issue 和 Pull Request 来帮助改进这个项目！
+### 从源码构建 Docker 镜像
 
----
+**构建 Linux 镜像**
+```bash
+docker build -t ai-travel-planner .
+docker run -d \
+  --name ai-travel-planner \
+  -p 8080:80 \
+  -e DOUBAO_APIKEY=your_doubao_api_key \
+  -e SUPABASE_KEY=your_supabase_anon_key \
+  -e XF_APPID=your_xunfei_app_id \
+  -e XF_APIKEY=your_xunfei_api_key \
+  -e XF_APISECRET=your_xunfei_api_secret \
+  -e BAIDU_AK=your_baidu_map_ak \
+  ai-travel-planner
+```
 
-**注意**: 当前版本已实现用户管理、AI智能旅行规划和语音输入功能。
+**构建 Windows 镜像**
+```bash
+docker build -t ai-travel-planner -f Dockerfile.windows .
+docker run -d \
+  --name ai-travel-planner \
+  -p 8080:8080 \
+  -e DOUBAO_APIKEY=your_doubao_api_key \
+  -e SUPABASE_KEY=your_supabase_anon_key \
+  -e XF_APPID=your_xunfei_app_id \
+  -e XF_APIKEY=your_xunfei_api_key \
+  -e XF_APISECRET=your_xunfei_api_secret \
+  -e BAIDU_AK=your_baidu_map_ak \
+  ai-travel-planner
+```
+
+### Docker Hub 自动构建配置
+
+为了实现 Docker 镜像的自动构建和推送，需要在 GitHub 仓库中配置以下 secrets。详细配置步骤请参考 [DOCKER_HUB_SETUP.md](DOCKER_HUB_SETUP.md)：
+
+1. `DOCKERHUB_USERNAME` - Docker Hub 用户名
+2. `DOCKERHUB_TOKEN` - Docker Hub 访问令牌
+
+## 项目结构
+
+```
+src/
+├── components/           # React 组件
+│   ├── Auth/            # 认证相关组件
+│   ├── Dashboard/       # 仪表板组件
+│   └── TravelPlanner/   # 旅行规划相关组件
+├── config/              # 配置文件
+├── lib/                 # 工具库
+├── services/            # 服务层
+└── index.js             # 应用入口文件
+```
+
+## 技术栈
+
+- React 18.2.0
+- Webpack 5.88.0
+- Supabase (认证和数据库)
+- 百度地图 API
+- 讯飞语音识别 API
+- 火山引擎豆包大模型 API
+
+## 注意事项
+
+所有 API 密钥都需要通过环境变量注入，不要在代码中硬编码密钥。
+
+## 供助教使用的测试密钥
+
+为了方便助教测试，我们提供了以下测试密钥（有效期至2026年1月）：
+
+请注意，这些密钥仅供测试使用，生产环境中请使用您自己的密钥。
