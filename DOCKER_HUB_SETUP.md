@@ -17,9 +17,11 @@
 3. 在左侧菜单中选择 "Security"
 4. 点击 "New Access Token"
 5. 输入令牌描述（如 "GitHub Actions"）
-6. 选择 "Read & Write" 权限
+6. 选择 "Read & Write" 权限（这将允许推送和拉取镜像）
 7. 点击 "Generate"
 8. 复制生成的访问令牌并保存（此令牌只会显示一次）
+
+注意：确保选择的是 "Read & Write" 权限，而不是 "Read" 权限，否则会出现权限不足的错误。
 
 ### 2. 在 GitHub 仓库中配置 Secrets
 

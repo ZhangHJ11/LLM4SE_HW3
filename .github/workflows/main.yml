@@ -33,24 +33,3 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: zhanghj11/llm4se_hw3:latest
-
-  docker-windows:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Docker
-        run: |
-          # Windows Docker 设置
-          docker version
-
-      - name: Login to Docker Hub
-        run: |
-          echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-
-      - name: Build and push Docker image (Windows)
-        run: |
-          # 构建 Windows 容器镜像
-          docker build -t zhanghj11/llm4se_hw3:windows-latest -f Dockerfile.windows .
-          docker push zhanghj11/llm4se_hw3:windows-latest
