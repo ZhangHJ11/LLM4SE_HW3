@@ -65,9 +65,6 @@ npm run build
 
 ### 使用预构建的 Docker 镜像
 
-您可以选择使用适用于 Linux 或 Windows 的镜像：
-
-**Linux 镜像（推荐，更轻量）**
 ```bash
 docker pull zhanghj11/llm4se_hw3:latest
 docker run -d \
@@ -82,44 +79,15 @@ docker run -d \
   zhanghj11/llm4se_hw3:latest
 ```
 
-**Windows 镜像（适用于 Windows 容器环境）**
-```bash
-docker pull zhanghj11/llm4se_hw3:windows-latest
-docker run -d \
-  --name ai-travel-planner \
-  -p 8080:8080 \
-  -e DOUBAO_APIKEY=your_doubao_api_key \
-  -e SUPABASE_KEY=your_supabase_anon_key \
-  -e XF_APPID=your_xunfei_app_id \
-  -e XF_APIKEY=your_xunfei_api_key \
-  -e XF_APISECRET=your_xunfei_api_secret \
-  -e BAIDU_AK=your_baidu_map_ak \
-  zhanghj11/llm4se_hw3:windows-latest
-```
+应用将在 http://localhost:8080 上运行。
 
 ### 从源码构建 Docker 镜像
 
-**构建 Linux 镜像**
 ```bash
 docker build -t ai-travel-planner .
 docker run -d \
   --name ai-travel-planner \
   -p 8080:80 \
-  -e DOUBAO_APIKEY=your_doubao_api_key \
-  -e SUPABASE_KEY=your_supabase_anon_key \
-  -e XF_APPID=your_xunfei_app_id \
-  -e XF_APIKEY=your_xunfei_api_key \
-  -e XF_APISECRET=your_xunfei_api_secret \
-  -e BAIDU_AK=your_baidu_map_ak \
-  ai-travel-planner
-```
-
-**构建 Windows 镜像**
-```bash
-docker build -t ai-travel-planner -f Dockerfile.windows .
-docker run -d \
-  --name ai-travel-planner \
-  -p 8080:8080 \
   -e DOUBAO_APIKEY=your_doubao_api_key \
   -e SUPABASE_KEY=your_supabase_anon_key \
   -e XF_APPID=your_xunfei_app_id \

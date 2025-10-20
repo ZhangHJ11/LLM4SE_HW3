@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  docker-linux:
+  docker:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -25,13 +25,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: zhanghj11/llm4se_hw3
-
-      - name: Build and push Docker image (Linux)
+      - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -39,7 +33,6 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: zhanghj11/llm4se_hw3:latest
-          labels: ${{ steps.meta.outputs.labels }}
 
   docker-windows:
     runs-on: windows-latest
