@@ -66,20 +66,14 @@ npm run build
 ### 使用预构建的 Docker 镜像
 
 ```bash
-docker pull zhanghj11/llm4se_hw3:latest
+docker pull zhrainj/llm4se_hw3:latest
 docker run -d \
   --name ai-travel-planner \
-  -p 8080:80 \
-  -e DOUBAO_APIKEY=your_doubao_api_key \
-  -e SUPABASE_KEY=your_supabase_anon_key \
-  -e XF_APPID=your_xunfei_app_id \
-  -e XF_APIKEY=your_xunfei_api_key \
-  -e XF_APISECRET=your_xunfei_api_secret \
-  -e BAIDU_AK=your_baidu_map_ak \
-  zhanghj11/llm4se_hw3:latest
+  -p 8555:80 \
+  zhrainj/llm4se_hw3:latest
 ```
 
-应用将在 http://localhost:8080 上运行。
+应用将在 http://localhost:8555 上运行。
 
 ### 从源码构建 Docker 镜像
 
@@ -88,12 +82,6 @@ docker build -t ai-travel-planner .
 docker run -d \
   --name ai-travel-planner \
   -p 8080:80 \
-  -e DOUBAO_APIKEY=your_doubao_api_key \
-  -e SUPABASE_KEY=your_supabase_anon_key \
-  -e XF_APPID=your_xunfei_app_id \
-  -e XF_APIKEY=your_xunfei_api_key \
-  -e XF_APISECRET=your_xunfei_api_secret \
-  -e BAIDU_AK=your_baidu_map_ak \
   ai-travel-planner
 ```
 
@@ -103,6 +91,12 @@ docker run -d \
 
 1. `DOCKERHUB_USERNAME` - Docker Hub 用户名
 2. `DOCKERHUB_TOKEN` - Docker Hub 访问令牌
+3. `DOUBAO_APIKEY` - 火山引擎API密钥
+4. `SUPABASE_KEY` - Supabase匿名密钥
+5. `XF_APPID` - 讯飞语音识别App ID
+6. `XF_APIKEY` - 讯飞语音识别API Key
+7. `XF_APISECRET` - 讯飞语音识别API Secret
+8. `BAIDU_AK` - 百度地图API密钥
 
 ## 项目结构
 

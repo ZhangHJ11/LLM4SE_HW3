@@ -33,3 +33,10 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/llm4se_hw3:latest
+          build-args: |
+            DOUBAO_APIKEY=${{ secrets.DOUBAO_APIKEY }}
+            SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}
+            XF_APPID=${{ secrets.XF_APPID }}
+            XF_APIKEY=${{ secrets.XF_APIKEY }}
+            XF_APISECRET=${{ secrets.XF_APISECRET }}
+            BAIDU_AK=${{ secrets.BAIDU_AK }}

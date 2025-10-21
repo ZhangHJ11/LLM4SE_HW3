@@ -1,6 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const webpack = require('webpack');
+const Dotenv = require('dotenv-webpack');
 
 module.exports = {
   entry: './src/index.js',
@@ -32,7 +32,12 @@ module.exports = {
       template: './public/index.html',
       filename: 'index.html',
     }),
-    // 移除了 dotenv-webpack 插件，因为环境变量将在运行时通过 Docker 注入
+    new Dotenv({
+      path: './.env.local',
+      safe: false, // 不强制要求默认文件
+      allowEmptyValues: true,
+      defaults: false, // 不加载默认文件
+    }),
   ],
   devServer: {
     static: {

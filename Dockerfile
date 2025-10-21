@@ -13,13 +13,22 @@ RUN npm ci
 # 复制项目文件
 COPY . .
 
-# 创建一个包含默认值的 .env.local 文件以避免构建错误
-RUN echo "DOUBAO_APIKEY=dummy_key" >> .env.local && \
-    echo "SUPABASE_KEY=dummy_key" >> .env.local && \
-    echo "XF_APPID=dummy_id" >> .env.local && \
-    echo "XF_APIKEY=dummy_key" >> .env.local && \
-    echo "XF_APISECRET=dummy_secret" >> .env.local && \
-    echo "BAIDU_AK=dummy_ak" >> .env.local
+# 构建应用时需要的环境变量
+# 这些变量会在构建时注入到前端代码中
+ARG DOUBAO_APIKEY
+ARG SUPABASE_KEY
+ARG XF_APPID
+ARG XF_APIKEY
+ARG XF_APISECRET
+ARG BAIDU_AK
+
+# 设置构建时环境变量
+ENV DOUBAO_APIKEY=${DOUBAO_APIKEY}
+ENV SUPABASE_KEY=${SUPABASE_KEY}
+ENV XF_APPID=${XF_APPID}
+ENV XF_APIKEY=${XF_APIKEY}
+ENV XF_APISECRET=${XF_APISECRET}
+ENV BAIDU_AK=${BAIDU_AK}
 
 # 构建应用
 RUN npm run build
