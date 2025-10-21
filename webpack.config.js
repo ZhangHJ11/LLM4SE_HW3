@@ -37,6 +37,7 @@ module.exports = {
       safe: false, // 不强制要求默认文件
       allowEmptyValues: true,
       defaults: false, // 不加载默认文件
+      systemvars: true, // 允许从系统环境变量读取
     }),
   ],
   devServer: {
