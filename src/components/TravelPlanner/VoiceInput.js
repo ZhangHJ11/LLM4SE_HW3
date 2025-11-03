@@ -31,6 +31,29 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
     return new Date().toUTCString();
   };
 
+  // debug 辅助：掩码中间内容，避免泄露完整密钥/授权串
+  const maskMiddle = (str, keep = 6) => {
+    try {
+      if (!str || str.length <= keep * 2) return '***';
+      return str.slice(0, keep) + '...MASK...' + str.slice(-keep);
+    } catch {
+      return '***';
+    }
+  };
+
+  const maskAuthInUrl = (url) => {
+    try {
+      const u = new URL(url);
+      const auth = u.searchParams.get('authorization');
+      if (auth) {
+        u.searchParams.set('authorization', maskMiddle(auth));
+      }
+      return u.toString();
+    } catch {
+      return url;
+    }
+  };
+
   // 生成HMAC-SHA256签名
   const hmacSHA256 = (data, secret) => {
     const encoder = new TextEncoder();
@@ -54,10 +77,11 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
   const generateAuthUrl = async () => {
     try {
       const host = 'iat.xf-yun.com';
+      const path = '/v1';
       const date = getRFC1123Date();
       
       // 构造signature原始字段
-      const signatureOrigin = `host: ${host}\ndate: ${date}\nGET /v1 HTTP/1.1`;
+      const signatureOrigin = `host: ${host}\ndate: ${date}\nGET ${path} HTTP/1.1`;
       
       // 生成signature
       const signature = await hmacSHA256(signatureOrigin, XF_CONFIG.apiSecret);
@@ -67,8 +91,28 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
       
       // base64编码authorization_origin
       const authorization = btoa(authorizationOrigin);
+
+      // 打印关键上下文（已掩码）
+      try {
+        console.log('[VoiceDebug] env', {
+          href: window.location.href,
+          protocol: window.location.protocol,
+          isSecureContext: window.isSecureContext,
+          userAgent: navigator.userAgent,
+          mediaDevices: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+          nowUtc: new Date().toUTCString(),
+        });
+        console.log('[VoiceDebug] authParams', {
+          host,
+          path,
+          date,
+          authorizationMasked: maskMiddle(authorization),
+          signaturePreview: maskMiddle(signature, 8),
+        });
+      } catch {}
       
-      const url = `wss://${host}/v1?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`;
+      const url = `wss://${host}${path}?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`;
+      try { console.log('[VoiceDebug] wsUrl', maskAuthInUrl(url)); } catch {}
       return url;
     } catch (err) {
       console.error('生成授权URL失败:', err);
@@ -95,7 +139,7 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
             resolve();
           };
           ws.onerror = (error) => {
-            console.error('WebSocket错误:', error);
+            try { console.error('WebSocket错误(onerror):', error); } catch {}
             const errorMsg = '连接讯飞服务失败: ' + (error.message || '未知错误');
             setErrorMessage(errorMsg);
             onError && onError(errorMsg);
@@ -109,7 +153,8 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
               console.error('解析讯飞返回数据失败:', err);
             }
           };
-          ws.onclose = () => {
+          ws.onclose = (e) => {
+            try { console.warn('WebSocket关闭(onclose):', { code: e.code, reason: e.reason }); } catch {}
             if (!isStoppingRef.current) {
               stopListening();
             }
