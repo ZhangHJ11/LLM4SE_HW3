@@ -50,7 +50,7 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
     });
   };
 
-  // 生成授权URL
+  // 生成授权URL（生产默认走代理 /xfws，开发直连官方）
   const generateAuthUrl = async () => {
     try {
       const host = 'iat.xf-yun.com';
@@ -68,8 +68,16 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
       // base64编码authorization_origin
       const authorization = btoa(authorizationOrigin);
       
-      // 构造最终URL
-      const url = `wss://${host}/v1?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`;
+      // 选择直连或经由本服务反向代理
+      const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      let url;
+      if (isLocalDev) {
+        url = `wss://${host}/v1?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`;
+      } else {
+        // 生产环境默认走容器内 Nginx 反向代理，以避免可能的 Origin 限制
+        const originWs = window.location.origin.replace('https:', 'wss:');
+        url = `${originWs}/xfws?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`;
+      }
       return url;
     } catch (err) {
       console.error('生成授权URL失败:', err);
