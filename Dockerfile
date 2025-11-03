@@ -40,8 +40,8 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # 复制 nginx 配置
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# 安装 openssl 并生成自签名证书（用于启用 HTTPS）
-RUN apk add --no-cache openssl \
+# 安装 openssl 和 CA 证书，并生成自签名证书（用于启用 HTTPS）
+RUN apk add --no-cache openssl ca-certificates \
     && mkdir -p /etc/nginx/ssl \
     && openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
         -subj "/CN=localhost" \
