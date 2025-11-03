@@ -50,8 +50,8 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
     });
   };
 
-  // 生成授权URL（生产默认走代理 /xfws，开发直连官方）
-  const generateAuthUrl = async () => {
+  // 生成候选授权URL列表（生产优先代理，失败回退直连）
+  const generateAuthUrls = async () => {
     try {
       const host = 'iat.xf-yun.com';
       const date = getRFC1123Date();
@@ -68,24 +68,21 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
       // base64编码authorization_origin
       const authorization = btoa(authorizationOrigin);
       
-      // 选择直连或经由本服务反向代理
       const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      let url;
+      const directUrl = `wss://${host}/v1?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`;
       if (isLocalDev) {
-        url = `wss://${host}/v1?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`;
-      } else {
-        // 生产环境默认走容器内 Nginx 反向代理，以避免可能的 Origin 限制
-        const originWs = window.location.origin.replace('https:', 'wss:');
-        url = `${originWs}/xfws?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`;
+        return [directUrl];
       }
-      return url;
+      const originWs = window.location.origin.replace('https:', 'wss:');
+      const proxyUrl = `${originWs}/xfws?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`;
+      return [proxyUrl, directUrl];
     } catch (err) {
       console.error('生成授权URL失败:', err);
       throw new Error('生成授权URL失败: ' + err.message);
     }
   };
 
-  // 连接讯飞WebSocket服务
+  // 连接讯飞WebSocket服务（带代理/直连回退）
   const connectXunfei = () => {
     return new Promise((resolve, reject) => {
       try {
@@ -94,40 +91,42 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
           throw new Error('请先配置讯飞API凭证');
         }
         
-        // 生成授权URL
-        generateAuthUrl().then(url => {
-          websocketRef.current = new WebSocket(url);
-          
-      websocketRef.current.onopen = () => {
-        sequenceRef.current = 0;
-        // 发送初始帧
-        sendInitialFrame();
-        resolve();
-      };
-          
-          websocketRef.current.onmessage = (event) => {
+        // 生成候选URL并逐个尝试
+        generateAuthUrls().then(async (urls) => {
+          let lastError = null;
+          for (let i = 0; i < urls.length; i++) {
+            const tryUrl = urls[i];
             try {
-              const data = JSON.parse(event.data);
-              handleRecognitionResult(data);
-            } catch (err) {
-              console.error('解析讯飞返回数据失败:', err);
+              await new Promise((res, rej) => {
+                const ws = new WebSocket(tryUrl);
+                websocketRef.current = ws;
+                ws.onopen = () => {
+                  sequenceRef.current = 0;
+                  sendInitialFrame();
+                  res(undefined);
+                };
+                ws.onerror = (e) => {
+                  rej(e);
+                };
+                ws.onmessage = (event) => {
+                  try {
+                    const data = JSON.parse(event.data);
+                    handleRecognitionResult(data);
+                  } catch (err) {
+                    console.error('解析讯飞返回数据失败:', err);
+                  }
+                };
+                ws.onclose = () => {
+                  // 由调用方控制停止逻辑
+                };
+              });
+              resolve();
+              return;
+            } catch (e) {
+              lastError = e;
             }
-          };
-          
-          websocketRef.current.onerror = (error) => {
-            console.error('WebSocket错误:', error);
-            const errorMsg = '连接讯飞服务失败: ' + (error.message || '未知错误');
-            setErrorMessage(errorMsg);
-            onError && onError(errorMsg);
-            reject(error);
-          };
-          
-          websocketRef.current.onclose = () => {
-            // 只在非主动停止时调用onStop
-            if (!isStoppingRef.current) {
-              stopListening();
-            }
-          };
+          }
+          reject(lastError || new Error('无法连接讯飞服务'));
         }).catch(err => {
           console.error('生成授权URL失败:', err);
           reject(err);
