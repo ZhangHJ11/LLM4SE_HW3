@@ -50,8 +50,8 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
     });
   };
 
-  // 生成候选授权URL列表（生产优先代理，失败回退直连）
-  const generateAuthUrls = async () => {
+  // 生成授权URL（直接连讯飞官方）
+  const generateAuthUrl = async () => {
     try {
       const host = 'iat.xf-yun.com';
       const date = getRFC1123Date();
@@ -68,21 +68,15 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
       // base64编码authorization_origin
       const authorization = btoa(authorizationOrigin);
       
-      const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const directUrl = `wss://${host}/v1?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`;
-      if (isLocalDev) {
-        return [directUrl];
-      }
-      const originWs = window.location.origin.replace('https:', 'wss:');
-      const proxyUrl = `${originWs}/xfws?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`;
-      return [proxyUrl, directUrl];
+      const url = `wss://${host}/v1?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`;
+      return url;
     } catch (err) {
       console.error('生成授权URL失败:', err);
       throw new Error('生成授权URL失败: ' + err.message);
     }
   };
 
-  // 连接讯飞WebSocket服务（带代理/直连回退）
+  // 连接讯飞WebSocket服务（直接连官方）
   const connectXunfei = () => {
     return new Promise((resolve, reject) => {
       try {
@@ -91,42 +85,35 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
           throw new Error('请先配置讯飞API凭证');
         }
         
-        // 生成候选URL并逐个尝试
-        generateAuthUrls().then(async (urls) => {
-          let lastError = null;
-          for (let i = 0; i < urls.length; i++) {
-            const tryUrl = urls[i];
+        // 生成授权URL并连接
+        generateAuthUrl().then((url) => {
+          const ws = new WebSocket(url);
+          websocketRef.current = ws;
+          ws.onopen = () => {
+            sequenceRef.current = 0;
+            sendInitialFrame();
+            resolve();
+          };
+          ws.onerror = (error) => {
+            console.error('WebSocket错误:', error);
+            const errorMsg = '连接讯飞服务失败: ' + (error.message || '未知错误');
+            setErrorMessage(errorMsg);
+            onError && onError(errorMsg);
+            reject(error);
+          };
+          ws.onmessage = (event) => {
             try {
-              await new Promise((res, rej) => {
-                const ws = new WebSocket(tryUrl);
-                websocketRef.current = ws;
-                ws.onopen = () => {
-                  sequenceRef.current = 0;
-                  sendInitialFrame();
-                  res(undefined);
-                };
-                ws.onerror = (e) => {
-                  rej(e);
-                };
-                ws.onmessage = (event) => {
-                  try {
-                    const data = JSON.parse(event.data);
-                    handleRecognitionResult(data);
-                  } catch (err) {
-                    console.error('解析讯飞返回数据失败:', err);
-                  }
-                };
-                ws.onclose = () => {
-                  // 由调用方控制停止逻辑
-                };
-              });
-              resolve();
-              return;
-            } catch (e) {
-              lastError = e;
+              const data = JSON.parse(event.data);
+              handleRecognitionResult(data);
+            } catch (err) {
+              console.error('解析讯飞返回数据失败:', err);
             }
-          }
-          reject(lastError || new Error('无法连接讯飞服务'));
+          };
+          ws.onclose = () => {
+            if (!isStoppingRef.current) {
+              stopListening();
+            }
+          };
         }).catch(err => {
           console.error('生成授权URL失败:', err);
           reject(err);
