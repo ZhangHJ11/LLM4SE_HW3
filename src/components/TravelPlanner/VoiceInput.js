@@ -318,14 +318,37 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
     }
   };
 
+  // 兼容性获取用户媒体
+  const getUserMedia = (constraints) => {
+    // 优先使用标准的mediaDevices API
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      return navigator.mediaDevices.getUserMedia(constraints);
+    }
+    
+    // 后备方案1: 使用旧的getUserMedia API
+    const getUserMediaLegacy = navigator.getUserMedia || 
+                               navigator.webkitGetUserMedia || 
+                               navigator.mozGetUserMedia || 
+                               navigator.msGetUserMedia;
+    
+    if (getUserMediaLegacy) {
+      return new Promise((resolve, reject) => {
+        getUserMediaLegacy.call(navigator, constraints, resolve, reject);
+      });
+    }
+    
+    // 如果都不支持，抛出错误
+    throw new Error('您的浏览器不支持getUserMedia API。请使用现代浏览器（Chrome、Firefox、Edge等）或确保使用HTTPS连接。');
+  };
+
   // 开始录音
   const startListening = async () => {
     try {
       setErrorMessage('');
       isStoppingRef.current = false;
       
-      // 先获取用户媒体权限
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      // 先获取用户媒体权限（使用兼容性函数）
+      const stream = await getUserMedia({ 
         audio: {
           sampleRate: 16000,
           channelCount: 1,
@@ -406,7 +429,21 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
       setIsListening(true);
     } catch (err) {
       console.error('启动录音失败:', err);
-      const errorMsg = '启动录音失败: ' + (err.message || '未知错误');
+      let errorMsg = '启动录音失败: ' + (err.message || '未知错误');
+      
+      // 提供更详细的错误信息
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+          errorMsg = '启动录音失败: 浏览器要求使用HTTPS连接才能访问麦克风。当前使用HTTP连接，请使用HTTPS访问或联系管理员配置SSL证书。';
+        } else {
+          errorMsg = '启动录音失败: 您的浏览器不支持媒体设备API。请使用现代浏览器（Chrome 60+、Firefox 55+、Edge 79+、Safari 11+）。';
+        }
+      } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        errorMsg = '启动录音失败: 您拒绝了麦克风权限。请在浏览器设置中允许此网站访问麦克风。';
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        errorMsg = '启动录音失败: 未找到麦克风设备。请确保已连接麦克风并允许浏览器访问。';
+      }
+      
       setErrorMessage(errorMsg);
       onError && onError(errorMsg);
       stopListening();
@@ -464,7 +501,7 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
       setIsTestingMic(true);
       setTestMicLevel(0);
       
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      const stream = await getUserMedia({ 
         audio: {
           sampleRate: 16000,
           channelCount: 1,
@@ -503,7 +540,22 @@ const VoiceInput = ({ onResult, onStop, onError }) => {
       
     } catch (err) {
       console.error('麦克风测试失败:', err);
-      setErrorMessage('麦克风测试失败: ' + err.message);
+      let errorMsg = '麦克风测试失败: ' + (err.message || '未知错误');
+      
+      // 提供更详细的错误信息
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+          errorMsg = '麦克风测试失败: 浏览器要求使用HTTPS连接才能访问麦克风。当前使用HTTP连接，请使用HTTPS访问或联系管理员配置SSL证书。';
+        } else {
+          errorMsg = '麦克风测试失败: 您的浏览器不支持媒体设备API。请使用现代浏览器（Chrome 60+、Firefox 55+、Edge 79+、Safari 11+）。';
+        }
+      } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        errorMsg = '麦克风测试失败: 您拒绝了麦克风权限。请在浏览器设置中允许此网站访问麦克风。';
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        errorMsg = '麦克风测试失败: 未找到麦克风设备。请确保已连接麦克风并允许浏览器访问。';
+      }
+      
+      setErrorMessage(errorMsg);
       setIsTestingMic(false);
       setTestMicLevel(0);
     }
